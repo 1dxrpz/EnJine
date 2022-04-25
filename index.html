@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>EnJine</title>
+	<style type="text/css">
+		body {
+				margin: 0;
+				width: 100%;
+				height: 100vh;
+				overflow: hidden;
+			}
+			.vignette {
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: radial-gradient(#0000, #0005);
+				z-index: 998;
+			}
+canvas {
+    image-rendering: optimizeSpeed;             // Older versions of FF
+    image-rendering: -moz-crisp-edges;          // FF 6.0+
+    image-rendering: -webkit-optimize-contrast; // Webkit (non standard naming)
+    image-rendering: -o-crisp-edges;            // OS X & Windows Opera (12.02+)
+    image-rendering: crisp-edges;               // Possible future browsers.
+    -ms-interpolation-mode: nearest-neighbor;   // IE (non standard naming)
+}
+.logo {
+	font-family: Consolas;
+	position: absolute;
+	z-index: 999;
+	font-weight: bold;
+	color: #333;
+	font-size: 32pt;
+	padding: 10px;
+	bottom: 60px;
+	right: 20px;
+}
+.logo::after {
+	width: 300px;
+	content: "Made by Kenneth Gibson";
+	font-family: Consolas;
+	position: absolute;
+	z-index: 999;
+	font-weight: 600;
+	color: #444;
+	font-size: 12pt;
+	top: 60px;
+	left: 15px;
+}
+.git {
+	position: absolute;
+	right: 110px;
+	bottom: 10px;
+	z-index: 1000;
+}
+.git img {
+	width: 32px;
+	height: 32px;
+}
+.info {
+	position: absolute;
+	left: 10px;
+	top: 10px;
+	font-family: Consolas;
+}
+
+	</style>
+</head>
+<body>
+	<div class="vignette"></div>
+	<div class="logo">EnJine.js</div>
+	<a class="git" target="_blank" href="https://github.com/1dxrpz/EnJine">
+		<img src="Enjine/images/github.png">
+	</a>
+	<div class="info"></div>
+	<canvas id="canvas"></canvas>
+	<script type="text/javascript" src="Enjine.min.js"></script>
+	<!--
+	<script type="text/javascript" src="Enjine/enjine-keycodes.js"></script>
+	<script type="text/javascript" src="Enjine/enjine-math.js"></script>
+	<script type="text/javascript" src="Enjine/enjine-contentLoader.js"></script>
+	<script type="text/javascript" src="Enjine/enjine-components.js"></script>
+	<script type="text/javascript" src="Enjine/enjine-core.js"></script>
+	-->
+	<script type="text/javascript" src="MainScript.js"></script>
+</body>
+</html>
