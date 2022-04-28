@@ -24,7 +24,7 @@ class vec {
 	}
 	dotProduct(v) {
 		var {x, y} = v;
-		return new vec(this.x * x, this.y * y);
+		return this.x * x + this.y * y;
 	}
 	fromPolar(center, angle, length = 1) {
 		this.x = Math.cos(degToRad * angle) * length + center.x;
@@ -60,6 +60,43 @@ class vec {
 	toString() {
 		return `{x: ${Math.round(this.x * 100) / 100}; y: ${Math.round(this.y * 100) / 100}}`;
 	}
+}
+class Color {
+	static black = "#000";
+	static blue = "#00f";
+	static green = "#0f0";
+	static cyan = "#0ff";
+	static red = "#f00";
+	static magenta = "#f0f";
+	static yellow = "#ff0";
+	static white = "#fff";
+	static orange = "#FFA500";
+	static aliceBlue = "#f0f8ff";
+	static wheat = "#f5deb3";
+	static tomato = "#ff6347";
+	static gray = "#808080";
+	static pink = "#ee82ee";
+	static lightGray = "#d3d3d3";
+
+	_color = "";
+	constructor(a, b, c, d) {
+		var _c = {r: a, g: b, b: c, a: d};
+
+		if (d == undefined) {
+			_c.a = 1;
+			if (c == undefined) {
+				_c = {r: a == undefined ? 0 : a,
+					g: a == undefined ? 0 : a,
+					b: a == undefined ? 0 : a,
+					a: b == undefined ? 1 : b};
+			}
+		}
+		this._color = `rgba(${_c.r}, ${_c.g}, ${_c.b}, ${_c.a})`;
+	}
+}
+class Ray {
+	origin = new vec();
+	direction = new vec();
 }
 
 function lerp(start, end, t) {

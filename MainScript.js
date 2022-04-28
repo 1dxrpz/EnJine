@@ -4,96 +4,189 @@ var info = document.querySelector(".info");
 
 LoadContent({
 	PlayerSprite: "player.png",
-	prop: "props.png"
+	PlayerRun: "player_run.png",
+	prop: "props.png",
+	ground: "ground.png"
 });
 
 var player = new GameObject();
 var prop = new GameObject();
+var ground = new TileMap();
 
-var gameObjects = [player, prop];
+var gameObjects = [prop, player];
 
+EventHandler("resize", v => {
+	GameSettings.Window.width = window.innerWidth;
+	GameSettings.Window.height = window.innerHeight;
+	UpdateResolution();
+})
+var sound;
 EventHandler("start", v => {
+	
 	GameSettings.EnableSmoothing = false;
 	GameSettings.ShowColliders = false;
+	GameSettings.Window.width = window.innerWidth;
+	GameSettings.Window.height = window.innerHeight;
 
-	player.animation = new Animation({
+	UpdateResolution();
+
+	player.AddComponent(new Animation({
 		spriteSheet: Content.PlayerSprite,
-		frameCount: 7,
-		animation: 1,
+		frameCount: 4,
+		animation: 0,
 		animationSpeed: .1,
 		spriteSize: new vec(50, 37)
-	});
-	player.collider = new Collider({
+	}));
+	player.AddComponent(new Collider({
 		offset: new vec(80, 150),
 		scale: new vec(100, 30)
-	});
-	player.physics.slippery = .1;
+	}));
+	player.AddComponent(new Physics({
+		slippery: .25
+	}));
+	player.AddComponent(new Transform({
+		scale: new vec(50 * 5, 37 * 5),
+		depth: 1,
+		pivot: new vec(50 * 5 / 2, 37 * 5 / 2),
+		position: new vec(100, 100)
+	}));
+	player.AddComponent(new Trigger({
+		offset: new vec(80, 150),
+		scale: new vec(100, 30)
+	}));
+	player.AddComponent(new Shadow({
+		radius: 40,
+		color: new Color(0, .1)
+	}));
 
-	prop.animation = new Animation({
+	prop.AddComponent(new Animation({
 		spriteSheet: Content.prop,
 		animation: 0,
 		frame: 1,
 		spriteSize: new vec(32, 32 * 2)
-	});
-	prop.collider = new Collider({
+	}));
+	prop.AddComponent(new Collider({
 		offset: new vec(0, 96),
 		scale: new vec(64, 32)
+	}));
+	prop.AddComponent(new Transform({
+		scale: new vec(32 * 2, 32 * 4),
+		depth: 0
+	}));
+	prop.AddComponent(new Physics({
+		mass: 1,
+		slippery: .15
+	}));
+	ground.source = Content.ground;
+	ground.map = [
+		[29,0,0,7,0],
+		[0,0,13,0,9],
+		[0,17,54,60,61],
+		[28,42,32,41,52],
+		[0,0,57,56,0]
+	];
+	ground.size = new vec(128, 128);
+	sound = new SoundEmitter({
+		source: ["step1.mp3", "step2.mp3", "step3.mp3"],
+		delay: 400,
+		randomize: true,
+		volume: .01
 	});
-	player.transform.scale = new vec(50 * 5, 37 * 5);
-	player.transform.pivot = player.transform.scale.multiply(.5);
-	prop.transform.scale = new vec(32 * 2, 32 * 4);
-	player.transform.depth = 1;
-	player.transform.position = new vec(100, 100);
-	prop.transform.depth = 0;
 });
 
-EventHandler("update", v => {
-	var _pos = player.transform.position
+function playsound() {
+	var test = new Audio();
+	var random = Math.round(Math.random() * 2);
+	test.src = `step${random + 1}.mp3`;
+	test.play().then(_ => {
+	});
+}
+
+EventHandler("update", v => {	
+	var _pos = player.GetComponent('transform').position
 				.add(
 					MainCamera.resolution
 						.multiply(.5)
 						.invert()
 					)
-				.add(player.transform.scale.multiply(.5));
+				.add(player.GetComponent('transform').scale.multiply(.5));
 	MainCamera.position = MainCamera.position.lerp(_pos, .1);
 	
-	if (player.collider.IsOverlapping(prop)) {
-		player.collider.color = "#ff000077";
+	if (player.GetComponent('collider').IsOverlapping(prop)) {
+		player.GetComponent('collider').color = "#ff000077";
 	} else {
-		player.collider.color = "#00000077";
+		player.GetComponent('collider').color = "#00000077";
 	}
+	
+	if ((Input.Keyboard.OnKeyUp(Keys.d) || Input.Keyboard.OnKeyUp(Keys.a) || Input.Keyboard.OnKeyUp(Keys.s) || Input.Keyboard.OnKeyUp(Keys.w))
+		&& !Input.Keyboard.IsKeyDown(Keys.d) && !Input.Keyboard.IsKeyDown(Keys.a) && !Input.Keyboard.IsKeyDown(Keys.s) && !Input.Keyboard.IsKeyDown(Keys.w)) {
+		player.GetComponent('animation').SetAnimation({
+			frameCount: 4,
+			animation: 0,
+			spriteSheet: Content.PlayerSprite
+		});
+	}
+	if (Input.Keyboard.OnKeyDown(Keys.d) || Input.Keyboard.OnKeyDown(Keys.w) || Input.Keyboard.OnKeyDown(Keys.a) || Input.Keyboard.OnKeyDown(Keys.s)) {
+		player.GetComponent('animation').SetAnimation({
+			frameCount: 6,
+			animation: 0,
+			spriteSheet: Content.PlayerRun
+		});
+	}
+	
+	player.GetComponent('collider').OnCollide(prop, _ => {
+		player.GetComponent('physics').momentum = new vec(0, 0);
+	});
 
 	var direction = new vec();
-	if (Input.Keyboard.IsKeyDown(Keys.d) && !player.IsCollideLeft(prop)) {
-		direction.x = 1;
-		player.animation.mirror.x = 1;
+	var force = new vec();
+	if (Input.Keyboard.IsKeyDown(Keys.d)) {
+		if (!player.GetComponent('collider').IsCollideLeft(prop))
+			direction.x = 1;
+		force.x = 1;
+		player.GetComponent('animation').mirror.x = 1;
+		sound.Play();
 	}
-	if (Input.Keyboard.IsKeyDown(Keys.a) && !player.IsCollideRight(prop)) {
-		direction.x = -1;
-		player.animation.mirror.x = -1;
+	if (Input.Keyboard.IsKeyDown(Keys.a)) {
+		if (!player.GetComponent('collider').IsCollideRight(prop))
+			direction.x = -1;
+		force.x = -1;
+		player.GetComponent('animation').mirror.x = -1;
+		sound.Play();
 	}
-	if (Input.Keyboard.IsKeyDown(Keys.w) && !player.IsCollideBottom(prop)) {
-		direction.y = -1;
+	if (Input.Keyboard.IsKeyDown(Keys.w)) {
+		if (!player.GetComponent('collider').IsCollideBottom(prop))
+			direction.y = -1;
+		force.y = -1;
+		sound.Play();
 	}
-	if (Input.Keyboard.IsKeyDown(Keys.s) && !player.IsCollideTop(prop)) {
-		direction.y = 1;
+	if (Input.Keyboard.IsKeyDown(Keys.s)) {
+		if (!player.GetComponent('collider').IsCollideTop(prop))
+			direction.y = 1;
+		force.y = 1;
+		sound.Play();
 	}
-	if (player.OnCollide(prop)) {
-		player.physics.momentum = new vec();
-	}
+	
 	var speed = direction.normalize().multiply(10);
-	player.physics.velocity = speed;
-	//player.physics.velocity = player.physics.velocity.lerp(speed, .1);
+	player.GetComponent('physics').velocity = speed;
+	player.GetComponent('physics').force = force.normalize().multiply(10);
 
-	player.transform.depth = player.transform.position.y + player.transform.scale.y < prop.transform.position.y + prop.transform.scale.y ? -1 : 1;
+	if (player.GetComponent('collider').IsOverlapping(prop)) {
+		prop.GetComponent('physics').ApplyForce(player.GetComponent('physics').force);
+	}
+	var _pt = player.GetComponent('transform');
+	_pt.depth = _pt.position.y + _pt.scale.y < prop.GetComponent('transform').position.y + prop.GetComponent('transform').scale.y ? -1 : 1;
+	/*
 
 	info.innerHTML = player.transform.position;
-
+	*/
 	gameObjects
-		.sort((a, b) => a.transform.depth - b.transform.depth)
+		.sort((a, b) => a.GetComponent('transform').depth - b.GetComponent('transform').depth)
 		.forEach(v => v.Update());
 });
+
 EventHandler("draw", v => {
+	ground.Draw();
 	gameObjects
 		.forEach(v => v.Draw());
 });
